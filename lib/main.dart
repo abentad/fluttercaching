@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'AutoComplete',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -34,6 +36,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List data = [];
+  bool isConnected;
+
   //creates a box for the hive database
   Box box;
   //opens the box called data we created into the directory of the app
@@ -67,9 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
       var jsonDecodedData = jsonDecode(response.body);
       //adds the jsondecoded data into the hive box using the function we wrote
       await addData(jsonDecodedData);
+      isConnected = true;
     } catch (SocketException) {
       //checks whether there is internet or not using SocketException
       print('no internet');
+      isConnected = false;
     }
 
     //get the data from DB
@@ -93,6 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
       var jsonDecodedData = jsonDecode(response.body);
       await addData(jsonDecodedData);
       setState(() {});
+      Toast.show("Refreshed", context,
+          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
     } catch (SocketException) {
       //will display a toast at the bottom of the screen indicating there is no internet
       Toast.show("No Internet", context,
@@ -102,6 +110,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      body: Center(
+        child: FutureBuilder(
+          future: getAllData(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              if (data.contains("empty")) {
+                return RefreshIndicator(
+                  onRefresh: updateData,
+                  child: Text(
+                    'No data',
+                    style: TextStyle(
+                      fontSize: 24.0,
+                      color: Colors.red,
+                    ),
+                  ),
+                );
+              } else {
+                return Column(
+                  children: [
+                    SizedBox(height: 25.0),
+                    Image(
+                      height: 250,
+                      image: isConnected
+                          ? AssetImage("assets/fast-food.png")
+                          : AssetImage("assets/no-signal.png"),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: updateData,
+                        child: ListView.builder(
+                          itemCount: data.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              title: Text(
+                                "${data[index]['name']}",
+                                style: TextStyle(
+                                  fontSize: 24.0,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            } else {
+              return CircularProgressIndicator();
+            }
+          },
+        ),
+      ),
+    );
   }
 }
