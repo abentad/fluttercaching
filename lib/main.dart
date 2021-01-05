@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:toast/toast.dart';
 
 void main() async {
   //await for hive to initialize before running the app
@@ -83,6 +84,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     //returns true
     return Future.value(true);
+  }
+
+  Future<void> updateData() async {
+    String url = "https://abisfoodrecipeapi.herokuapp.com/search?term=cheese";
+    try {
+      var response = await http.get(url);
+      var jsonDecodedData = jsonDecode(response.body);
+      await addData(jsonDecodedData);
+      setState(() {});
+    } catch (SocketException) {
+      //will display a toast at the bottom of the screen indicating there is no internet
+      Toast.show("No Internet", context,
+          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+    }
   }
 
   @override
