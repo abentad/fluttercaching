@@ -72,10 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     //get the data from DB
+    //creates a list that holds all values of the hive box after converting it to map and then to list
     var myMap = box.toMap().values.toList();
+    //if the list is empty just add empty string to the data variable created at the beginning
     if (myMap.isEmpty) {
       data.add("empty");
     } else {
+      //if the list is not empty add all values inside the myMap list to the list data
       data = myMap;
     }
     //returns true
